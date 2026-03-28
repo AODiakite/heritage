@@ -1,0 +1,42 @@
+#' heritage: Hierarchical Effects Regression with Interactions for Trait
+#' Analysis in Genetics
+#'
+#' @description
+#' The \pkg{heritage} package implements the HERITAGE framework
+#' (\emph{Hierarchical Effects Regression with Interactions for Trait Analysis
+#' in GEnetics}). HERITAGE reinterprets pedigrees as directed acyclic networks
+#' of intergenerational influence and decomposes each continuous phenotype into:
+#'
+#' \enumerate{
+#'   \item A \strong{direct genetic effect}
+#'     \eqn{\boldsymbol{\beta}^\top x_i}: the influence of an individual's
+#'     own genotype.
+#'   \item A \strong{kinship-weighted ancestral spillover}
+#'     \eqn{\boldsymbol{\delta}^\top s_X^{(i)}}: the indirect influence of
+#'     parental genotypes through the shared environment they create (genetic
+#'     nurture).
+#' }
+#'
+#' Hierarchical sparsity is enforced:
+#' \eqn{\mathrm{supp}(\boldsymbol{\delta}) \subseteq
+#' \mathrm{supp}(\boldsymbol{\beta})} means a spillover effect is non-zero only
+#' when the corresponding direct effect is non-zero. Estimation proceeds via
+#' the \strong{Hierarchical Alternating Minimization Algorithm (HAMA)}.
+#'
+#' @section Main functions:
+#' \describe{
+#'   \item{\code{\link{heritage}}}{Fit the HERITAGE model for a given penalty
+#'     pair \eqn{(\lambda_\beta, \lambda_\delta)}.}
+#'   \item{\code{\link{heritage_gs}}}{Select the penalty pair automatically
+#'     via grid search on a held-out tuning set.}
+#'   \item{\code{\link{compute_spillover_X}}}{Build the kinship-weighted
+#'     spillover covariate matrix \eqn{\mathbf{s}_X} from pedigree data.}
+#' }
+#'
+#' @section References:
+#' Abdoul Oudouss Diakite, Anne-Marie Madore, Catherine Laprise (2026).
+#' HERITAGE: Hierarchical effects regression with interactions for trait
+#' analysis in genetics. Manuscript in preparation.
+#'
+#' @keywords internal
+"_PACKAGE"

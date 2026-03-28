@@ -1,0 +1,68 @@
+#' Compute the Kinship-Weighted Ancestral Spillover Covariates
+#'
+#' Builds the spillover matrix \eqn{\mathbf{s}_X} required by
+#' \code{\link{heritage}}. For each individual \eqn{i},
+#' \deqn{
+#'   s_X^{(i)} = \frac{\displaystyle\sum_{j \in \mathcal{N}_i}
+#'               \phi_{ij}\, x_j}
+#'               {\displaystyle\sum_{j \in \mathcal{N}_i} \phi_{ij}},
+#' }
+#' where \eqn{\mathcal{N}_i := \mathrm{Anc}(i)} is the set of known ancestors
+#' of \eqn{i} in the pedigree and \eqn{\phi_{ij} = K_{ij}} is the kinship
+#' coefficient. Individuals with no recorded ancestors (founders) receive a
+#' zero spillover row.
+#'
+#' @details
+#' The kinship matrix \eqn{\mathbf{K}} is treated as fixed and exogenous.  It
+#' can be computed from pedigree records using packages such as \pkg{kinship2},
+#' or from genomic data using \pkg{GENESIS} (genomic relationship matrix).
+#'
+#' The \code{ancestors} list must respect the directed acyclic structure of the
+#' pedigree: ancestors can influence descendants, but not the reverse.
+#'
+#' @param X         Numeric matrix of covariates (\eqn{N \times d}).
+#' @param K         Numeric matrix; \eqn{N \times N} kinship matrix.
+#'   \eqn{K_{ij}} is the kinship coefficient between individuals \eqn{i} and
+#'   \eqn{j} (e.g. 0.25 for a parent-offspring pair).
+#' @param ancestors A list of length \eqn{N}. Element \code{ancestors[[i]]}
+#'   is an integer vector of row indices (in \code{X} and \code{K}) of all
+#'   known ancestors of individual \eqn{i}. An empty vector indicates a
+#'   founder.
+#'
+#' @return Numeric matrix (\eqn{N \times d}); kinship-weighted ancestral
+#'   covariate averages. Row \eqn{i} is zero for founders.
+#'
+#' @seealso \code{\link{heritage}}, \code{\link{heritage_gs}}
+#'
+#' @references
+#' Abdoul Oudouss Diakite, Anne-Marie Madore, Catherine Laprise (2026).
+#' HERITAGE: Hierarchical effects regression with interactions for trait
+#' analysis in genetics. Manuscript in preparation.
+#'
+#' @examples
+#' # 4 individuals, 3 covariates
+#' # Individuals 3 and 4 have individuals 1 and 2 as parents
+#' X <- matrix(c(0,1,2, 1,0,1, 1,1,0, 2,0,1), nrow = 4, byrow = TRUE)
+#' K <- diag(4)  # simplified identity kinship
+#' ancestors <- list(integer(0), integer(0), c(1L, 2L), c(1L, 2L))
+#'
+#' sX <- compute_spillover_X(X, K, ancestors)
+#' sX
+#'
+#' @export
+compute_spillover_X <- function(X, K, ancestors) {
+  N  <- nrow(X)
+  d  <- ncol(X)
+  sX <- matrix(0, N, d)
+
+  for (i in seq_len(N)) {
+    anc_i <- ancestors[[i]]
+    if (length(anc_i) > 0L) {
+      w     <- K[i, anc_i]
+      w_sum <- sum(w)
+      if (w_sum > 0)
+        sX[i, ] <- colSums(w * X[anc_i, , drop = FALSE]) / w_sum
+    }
+  }
+  sX
+}

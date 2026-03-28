@@ -1,0 +1,41 @@
+Package: heritage
+Type: Package
+Title: Hierarchical Effects Regression with Interactions for Trait Analysis in Genetics
+Version: 0.1.0
+Authors@R: c(
+    person("Abdoul Oudouss", "Diakite",
+           role = c("aut", "cre"),
+           email = "abdoul.oudouss.diakite@uqac.ca"),
+    person("Anne-Marie", "Madore",
+           role = "aut"),
+    person("Catherine", "Laprise",
+           role = "aut",
+           email = "claprise@uqac.ca")
+  )
+Description: Implements the HERITAGE framework (Hierarchical Effects Regression
+    with Interactions for Trait Analysis in GEnetics). HERITAGE reinterprets
+    pedigrees as directed networks of intergenerational influence and decomposes
+    each phenotype into (1) a direct effect of personal genotypes and (2) a
+    kinship-weighted ancestral spillover reflecting genetic nurture. It enforces
+    hierarchical sparsity: spillover effects are only allowed when the
+    corresponding direct effect is non-zero. Estimation uses the Hierarchical
+    Alternating Minimization Algorithm (HAMA). The package also provides
+    utilities to compute kinship-weighted spillover covariates from pedigree
+    data and a grid-search wrapper for joint hyperparameter selection.
+License: MIT + file LICENSE
+URL: https://github.com/abdouloudouss/heritage
+BugReports: https://github.com/abdouloudouss/heritage/issues
+Encoding: UTF-8
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.0.0)
+Imports:
+    glmnet,
+    stats,
+    graphics,
+    grDevices,
+    utils
+Suggests:
+    pROC,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
