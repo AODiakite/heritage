@@ -5,7 +5,7 @@ Version: 0.1.0
 Authors@R: c(
     person("Abdoul Oudouss", "Diakite",
            role = c("aut", "cre"),
-           email = "abdoul.oudouss.diakite@uqac.ca"),
+           email = "aodiakite@etu.uqac.ca"),
     person("Anne-Marie", "Madore",
            role = "aut"),
     person("Catherine", "Laprise",

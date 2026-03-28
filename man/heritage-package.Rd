@@ -55,7 +55,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Abdoul Oudouss Diakite \email{abdoul.oudouss.diakite@uqac.ca}
+\strong{Maintainer}: Abdoul Oudouss Diakite \email{aodiakite@etu.uqac.ca}
 
 Authors:
 \itemize{
