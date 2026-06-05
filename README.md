@@ -1,6 +1,7 @@
-# heritage - Simulation Study: Scenario 1 (High Dimensionality)
-Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood, Catherine Laprise
-2026-03-27
+# heritage — Simulation Study: Scenario 1 (High Dimensionality)
+Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T.
+Greenwood, Catherine Laprise
+2026-06-05
 
 ## Overview
 
@@ -53,7 +54,7 @@ set.seed(2026)
 
 ------------------------------------------------------------------------
 
-## Step 1 - Simulate the pedigree
+## Step 1 — Simulate the pedigree
 
 Following the paper: 4-generation pedigree starting from 250 founders,
 litter size 2, random mate selection.
@@ -103,7 +104,7 @@ table(pedigree_df$gen)
 
 ------------------------------------------------------------------------
 
-## Step 2 - Simulate genotypes
+## Step 2 — Simulate genotypes
 
 Allele frequencies are drawn uniformly from $[0.01, 0.99]$ and genotypes
 are propagated according to Mendelian laws via
@@ -136,7 +137,7 @@ cat(sprintf("AF range        : [%.3f, %.3f]\n",
 
 ------------------------------------------------------------------------
 
-## Step 3 - Compute the kinship matrix
+## Step 3 — Compute the kinship matrix
 
 ``` r
 K <- as.matrix(kinship(
@@ -152,7 +153,7 @@ cat(sprintf("Kinship matrix : %d x %d\n", nrow(K), ncol(K)))
 
 ------------------------------------------------------------------------
 
-## Step 4 - Build the ancestor list
+## Step 4 — Build the ancestor list
 
 Using `build_ancestor_list()` from the `heritage` package, which
 recursively traverses the pedigree for each individual via
@@ -175,7 +176,7 @@ cat(sprintf("Non-founders            : %d\n", N - n_founders))
 
 ------------------------------------------------------------------------
 
-## Step 5 - Compute the spillover matrix $s_X$
+## Step 5 — Compute the spillover matrix $s_X$
 
 ``` r
 sX <- compute_spillover_X(X, K, ancestors)
@@ -188,7 +189,7 @@ cat(sprintf("Individuals with non-zero spillover: %.1f%%\n",
 
 ------------------------------------------------------------------------
 
-## Step 6 - Generate the outcome
+## Step 6 — Generate the outcome
 
 True coefficients are fixed across replications; only $\varepsilon$
 varies.
@@ -246,7 +247,7 @@ cat(sprintf("Oracle R2 (signal / variance) : %.3f\n",
 
 ------------------------------------------------------------------------
 
-## Step 7 - Split data by family
+## Step 7 — Split data by family
 
 Data are partitioned **by family** (60 % train / 20 % tune / 20 % test)
 to prevent data leakage, following the paper’s protocol.
@@ -305,6 +306,7 @@ X_test   <- scale_mat(X[idx_test,   ], mu_X, sd_X)
 
 sX_train <- scale_mat(sX[idx_train, ], mu_X, sd_X)
 sX_tune  <- scale_mat(sX[idx_tune,  ], mu_X, sd_X)
+
 sX_test  <- scale_mat(sX[idx_test,  ], mu_X, sd_X)
 
 y_train  <- y[idx_train]
@@ -314,7 +316,7 @@ y_test   <- y[idx_test]
 
 ------------------------------------------------------------------------
 
-## Step 8 - Fit HERITAGE with grid search
+## Step 8 — Fit HERITAGE with grid search
 
 ``` r
 gs <- heritage_gs(
@@ -356,7 +358,7 @@ print(gs)
 
 ------------------------------------------------------------------------
 
-## Step 9 - Diagnostics
+## Step 9 — Diagnostics
 
 ### Regularisation paths
 
@@ -368,7 +370,7 @@ plot(gs, type = "paths")
 
 ![](README_files/figure-commonmark/fig-paths-1.png)
 
-Figure 2: Number of active coefficients as a function of each penalty.
+Figure 1: Number of active coefficients as a function of each penalty.
 
 </div>
 
@@ -382,13 +384,13 @@ plot(gs, type = "sparsity")
 
 ![](README_files/figure-commonmark/fig-sparsity-1.png)
 
-Figure 3: Active coefficient counts across all grid combinations.
+Figure 2: Active coefficient counts across all grid combinations.
 
 </div>
 
 ------------------------------------------------------------------------
 
-## Step 10 - Performance metrics
+## Step 10 — Performance metrics
 
 ``` r
 best  <- gs$best_model
@@ -433,7 +435,7 @@ ggplot(data.frame(obs = y_test, pred = y_hat),
 
 ![](README_files/figure-commonmark/fig-obs-pred-1.png)
 
-Figure 4: Observed vs predicted values on the test set.
+Figure 3: Observed vs predicted values on the test set.
 
 </div>
 
@@ -441,6 +443,7 @@ Figure 4: Observed vs predicted values on the test set.
 
 ## Reference
 
-Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood, Catherine Laprise (2026).
-HERITAGE: Hierarchical effects regression with interactions for trait
-analysis in genetics. *Manuscript in preparation.*
+Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood,
+Catherine Laprise (2026). HERITAGE: Hierarchical effects regression with
+interactions for trait analysis in genetics. *Manuscript in
+preparation.*

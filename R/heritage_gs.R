@@ -363,7 +363,7 @@ summary.heritage_gs <- function(object, ...) {
 #'   }
 #' @param ... Currently unused.
 #' @return \code{NULL}, invisibly (called for its side effects).
-#' @importFrom graphics par image contour points legend abline lines grid plot
+#' @importFrom graphics par image contour points legend abline lines grid plot axis
 #'   plot.new text
 #' @importFrom grDevices colorRampPalette rgb
 #' @importFrom stats loess predict
@@ -449,16 +449,25 @@ plot.heritage_gs <- function(x,
 
 #' @keywords internal
 .heritage_plot_paths <- function(x, valid_grid) {
+  # Integer y-axis ticks: active-coefficient counts are whole numbers, so force
+  # integer tick marks instead of R's default (which can label 0.0, 0.5, ...).
+  int_ticks <- function(counts) {
+    rng <- range(counts)
+    seq(floor(rng[1L]), ceiling(rng[2L]),
+        by = max(1L, ceiling(diff(rng) / 6)))
+  }
+
   # Slice the 2D grid at the selected penalty of the other dimension so the
   # paths show integer active-coefficient counts for the actual fitted models,
   # rather than averages across the whole grid.
   bd <- valid_grid[valid_grid$lambda_delta == x$best_lambda_delta, ]
   bd <- bd[order(bd$lambda_beta, decreasing = TRUE), ]
   graphics::plot(log10(bd$lambda_beta), bd$n_active_beta,
-                 type = "b", pch = 19L, col = "#2c7fb8",
+                 type = "b", pch = 19L, col = "#2c7fb8", yaxt = "n",
                  xlab = expression(log[10](lambda[beta])),
                  ylab = "Active beta",
                  main = "Regularisation path: direct effects")
+  graphics::axis(2L, at = int_ticks(bd$n_active_beta))
   graphics::grid()
   graphics::abline(v = log10(x$best_lambda_beta), col = "red", lty = 2L,
                    lwd = 2L)
@@ -469,10 +478,11 @@ plot.heritage_gs <- function(x,
   dd <- valid_grid[valid_grid$lambda_beta == x$best_lambda_beta, ]
   dd <- dd[order(dd$lambda_delta, decreasing = TRUE), ]
   graphics::plot(log10(dd$lambda_delta), dd$n_active_delta,
-                 type = "b", pch = 19L, col = "#41ab5d",
+                 type = "b", pch = 19L, col = "#41ab5d", yaxt = "n",
                  xlab = expression(log[10](lambda[delta])),
                  ylab = "Active delta",
                  main = "Regularisation path: spillover effects")
+  graphics::axis(2L, at = int_ticks(dd$n_active_delta))
   graphics::grid()
   graphics::abline(v = log10(x$best_lambda_delta), col = "red", lty = 2L,
                    lwd = 2L)
