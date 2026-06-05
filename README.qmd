@@ -268,6 +268,7 @@ X_test   <- scale_mat(X[idx_test,   ], mu_X, sd_X)
 
 sX_train <- scale_mat(sX[idx_train, ], mu_X, sd_X)
 sX_tune  <- scale_mat(sX[idx_tune,  ], mu_X, sd_X)
+
 sX_test  <- scale_mat(sX[idx_test,  ], mu_X, sd_X)
 
 y_train  <- y[idx_train]
