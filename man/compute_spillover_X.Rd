@@ -55,7 +55,7 @@ sX
 
 }
 \references{
-Abdoul Oudouss Diakite, Anne-Marie Madore, Catherine Laprise (2026).
+Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood, Catherine Laprise (2026).
 HERITAGE: Hierarchical effects regression with interactions for trait
 analysis in genetics. Manuscript in preparation.
 }

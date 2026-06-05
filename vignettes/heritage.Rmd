@@ -1,0 +1,322 @@
+---
+title: "Getting started with HERITAGE"
+author: "Abdoul Oudouss Diakite"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 2
+vignette: >
+  %\VignetteIndexEntry{Getting started with HERITAGE}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  fig.width  = 6,
+  fig.height = 4,
+  fig.align  = "center"
+)
+set.seed(2026)
+```
+
+## What HERITAGE does
+
+`heritage` implements the **HERITAGE** framework (Hierarchical Effects
+Regression with Interactions for Trait Analysis in GEnetics). It reinterprets a
+pedigree as a directed network of intergenerational influence and decomposes
+each phenotype into two parts:
+
+1. a **direct effect** of an individual's own covariates,
+   $\boldsymbol{\beta}^\top x_i$; and
+2. a **kinship-weighted ancestral spillover** that captures genetic nurture,
+   $\boldsymbol{\delta}^\top s_X^{(i)}$.
+
+The conditional mean of the outcome is
+
+$$
+\eta_i = \alpha + \boldsymbol{\beta}^\top x_i +
+         \boldsymbol{\delta}^\top s_X^{(i)},
+\qquad
+s_X^{(i)} = \frac{\sum_{j \in \mathrm{Anc}(i)} \phi_{ij}\, x_j}
+                 {\sum_{j \in \mathrm{Anc}(i)} \phi_{ij}},
+$$
+
+where $\mathrm{Anc}(i)$ is the set of ancestors of $i$ and
+$\phi_{ij} = K_{ij}$ is the kinship coefficient. Estimation uses the
+Hierarchical Alternating Minimization Algorithm (HAMA), which enforces
+**hierarchical sparsity**: a spillover effect $\delta_j$ can be non-zero only
+when the corresponding direct effect $\beta_j$ is non-zero,
+$\mathrm{supp}(\boldsymbol{\delta}) \subseteq \mathrm{supp}(\boldsymbol{\beta})$.
+
+This vignette walks through a complete, self-contained workflow on a small
+simulated cohort. The only required package is `heritage` itself.
+
+```{r library}
+library(heritage)
+```
+
+## 1. A small pedigree
+
+We build a three-generation pedigree by hand: a set of unrelated founders who
+pair up to produce children, who in turn produce grandchildren. Founders have
+their `dam` and `sire` set to `0`.
+
+```{r pedigree}
+n_founders <- 20L
+
+# Generation 0: founders (unknown parents)
+g0 <- data.frame(id = 1:n_founders, dam = 0L, sire = 0L)
+
+# Generation 1: pair consecutive founders -> 2 children per couple
+make_children <- function(parents, start_id, n_per_couple = 2L) {
+  dams  <- parents$id[seq(1L, nrow(parents), by = 2L)]
+  sires <- parents$id[seq(2L, nrow(parents), by = 2L)]
+  kids  <- do.call(rbind, Map(function(d, s, k) {
+    data.frame(id = k, dam = d, sire = s)
+  }, dams, sires,
+  split(seq.int(start_id, length.out = length(dams) * n_per_couple),
+        rep(seq_along(dams), each = n_per_couple))))
+  kids
+}
+
+g1 <- make_children(g0, start_id = max(g0$id) + 1L)
+g2 <- make_children(g1, start_id = max(g1$id) + 1L)
+
+pedigree <- rbind(g0, g1, g2)
+N <- nrow(pedigree)
+head(pedigree, 10)
+cat(sprintf("Total individuals: %d (founders: %d)\n", N, n_founders))
+```
+
+## 2. Genotypes
+
+We simulate `d` independent biallelic markers as 0/1/2 dosages. Founder
+genotypes are drawn from Hardy-Weinberg proportions; offspring inherit one
+allele from each parent.
+
+```{r genotypes}
+d  <- 60L
+af <- runif(d, 0.1, 0.9)   # allele frequencies
+
+X <- matrix(0L, N, d)
+
+# Founders: HWE sampling
+for (i in seq_len(n_founders)) {
+  X[i, ] <- rbinom(d, size = 1, prob = af) + rbinom(d, size = 1, prob = af)
+}
+
+# Non-founders: transmit one allele from each parent
+draw_allele <- function(g) ifelse(g == 2L, 1L,
+                            ifelse(g == 0L, 0L, rbinom(length(g), 1, 0.5)))
+for (i in (n_founders + 1L):N) {
+  dam_row  <- which(pedigree$id == pedigree$dam[i])
+  sire_row <- which(pedigree$id == pedigree$sire[i])
+  X[i, ] <- draw_allele(X[dam_row, ]) + draw_allele(X[sire_row, ])
+}
+
+dim(X)
+```
+
+## 3. Ancestors and the kinship matrix
+
+`build_ancestor_list()` walks the pedigree once and returns, for each
+individual, the **row indices** of all of its ancestors. This is exactly the
+format `compute_spillover_X()` expects.
+
+```{r ancestors}
+ancestors <- build_ancestor_list(pedigree, verbose = FALSE)
+
+ancestors[[1]]                 # a founder -> integer(0)
+ancestors[[N]]                 # a grandchild -> parents + grandparents
+```
+
+The kinship matrix $K$ holds the kinship coefficient $\phi_{ij}$ for every
+pair. In practice you would compute it from pedigree records with
+`kinship2::kinship()` or from genotypes with a genomic relationship matrix.
+Here we compute it directly with the standard recursive algorithm so the
+vignette stays self-contained.
+
+```{r kinship}
+kinship_matrix <- function(ped) {
+  N <- nrow(ped)
+  pos <- match(ped$id, ped$id)
+  dam  <- match(ped$dam,  ped$id)   # NA for founders
+  sire <- match(ped$sire, ped$id)
+  K <- matrix(0, N, N)
+  for (i in seq_len(N)) {
+    di <- dam[i]; si <- sire[i]
+    # diagonal: 0.5 * (1 + kinship(dam, sire))
+    K[i, i] <- 0.5 * (1 + if (!is.na(di) && !is.na(si)) K[di, si] else 0)
+    if (i > 1L) for (j in seq_len(i - 1L)) {
+      kj <- 0
+      if (!is.na(di)) kj <- kj + 0.5 * K[di, j]
+      if (!is.na(si)) kj <- kj + 0.5 * K[si, j]
+      K[i, j] <- K[j, i] <- kj
+    }
+  }
+  K
+}
+
+K <- kinship_matrix(pedigree)
+K[1:6, 1:6]
+```
+
+## 4. Spillover covariates
+
+`compute_spillover_X()` turns genotypes, kinship, and the ancestor list into
+the spillover design matrix $s_X$. Founder rows are zero by construction.
+
+```{r spillover}
+sX <- compute_spillover_X(X, K, ancestors)
+
+cat(sprintf("Founders with zero spillover: %d / %d\n",
+            sum(rowSums(abs(sX)) == 0), n_founders))
+```
+
+## 5. Simulate a phenotype
+
+We plant a sparse, hierarchical truth: 5 markers carry a direct effect, and 3
+of those *also* carry a spillover effect (a strict subset, as the model
+assumes).
+
+```{r outcome}
+causal_beta  <- sort(sample(d, 5))
+causal_delta <- sort(sample(causal_beta, 3))
+
+beta_true  <- numeric(d); beta_true[causal_beta]   <- rnorm(5, sd = 0.6)
+delta_true <- numeric(d); delta_true[causal_delta] <- rnorm(3, sd = 0.4)
+
+y <- 1 + X %*% beta_true + sX %*% delta_true + rnorm(N, sd = 0.5)
+y <- as.vector(y)
+
+cat(sprintf("Direct truth   |S_beta|  = %d at %s\n",
+            length(causal_beta),  paste(causal_beta,  collapse = ", ")))
+cat(sprintf("Spillover truth |S_delta| = %d at %s\n",
+            length(causal_delta), paste(causal_delta, collapse = ", ")))
+```
+
+## 6. Fit a single model
+
+If you already know your penalties, call `heritage()` directly. Both
+`lambda_beta` and `lambda_delta` are required.
+
+```{r fit-single}
+fit <- heritage(y, X, sX,
+                family       = "gaussian",
+                lambda_beta  = 0.05,
+                lambda_delta = 0.05,
+                verbose      = FALSE)
+print(fit)
+```
+
+`summary()` lists every non-zero coefficient:
+
+```{r summary-single}
+summary(fit)
+```
+
+## 7. Select penalties by grid search
+
+In practice you rarely know the penalties in advance. `heritage_gs()` searches
+a grid of `(lambda_beta, lambda_delta)` pairs, selecting the combination that
+optimises a metric on a held-out **tuning** set, then reports performance on an
+untouched **test** set.
+
+To avoid leakage between relatives, we split **by family** rather than by
+individual.
+
+```{r split}
+family_id <- paste(pedigree$dam, pedigree$sire, sep = "-")
+fams      <- unique(family_id)
+
+set.seed(42)
+fams      <- sample(fams)
+n_tr      <- round(0.6 * length(fams))
+n_tu      <- round(0.2 * length(fams))
+
+f_train <- fams[seq_len(n_tr)]
+f_tune  <- fams[(n_tr + 1L):(n_tr + n_tu)]
+f_test  <- fams[(n_tr + n_tu + 1L):length(fams)]
+
+i_tr <- which(family_id %in% f_train)
+i_tu <- which(family_id %in% f_tune)
+i_te <- which(family_id %in% f_test)
+
+c(train = length(i_tr), tune = length(i_tu), test = length(i_te))
+```
+
+Standardise the design matrices using **training-set** means and standard
+deviations only:
+
+```{r standardise}
+mu <- colMeans(X[i_tr, ]); s <- apply(X[i_tr, ], 2, sd); s[s < 1e-10] <- 1
+scl <- function(m) sweep(sweep(m, 2, mu, "-"), 2, s, "/")
+
+gs <- heritage_gs(
+  y_train = y[i_tr], X_train = scl(X[i_tr, ]), sX_train = scl(sX[i_tr, ]),
+  y_tune  = y[i_tu], X_tune  = scl(X[i_tu, ]), sX_tune  = scl(sX[i_tu, ]),
+  y_test  = y[i_te], X_test  = scl(X[i_te, ]), sX_test  = scl(sX[i_te, ]),
+  family         = "gaussian",
+  n_lambda_beta  = 12,
+  n_lambda_delta = 12,
+  metric         = "mse",
+  verbose        = FALSE
+)
+print(gs)
+```
+
+The best refit model is stored in `gs$best_model` and behaves like any
+`heritage` fit:
+
+```{r best}
+best <- gs$best_model
+length(best$active_beta)   # selected direct effects
+length(best$active_delta)  # selected spillover effects
+```
+
+## 8. Diagnostics and prediction
+
+The grid-search object has a `plot()` method for regularisation paths and
+sparsity:
+
+```{r plot-paths, fig.cap = "Active coefficients along each penalty."}
+plot(gs, type = "paths")
+```
+
+Predict on new data with the `predict()` method, supplying both `newX` and
+`newsX`:
+
+```{r predict}
+y_hat <- predict(best,
+                 newX  = scl(X[i_te, ]),
+                 newsX = scl(sX[i_te, ]),
+                 type  = "response")
+
+r2 <- 1 - sum((y[i_te] - y_hat)^2) / sum((y[i_te] - mean(y[i_te]))^2)
+cat(sprintf("Test R2 = %.3f\n", r2))
+
+plot(y[i_te], y_hat,
+     xlab = "Observed", ylab = "Predicted",
+     main = sprintf("Test set (R2 = %.3f)", r2),
+     pch = 19, col = "#2c7fb8")
+abline(0, 1, col = "red", lty = 2)
+```
+
+## Recap
+
+The typical HERITAGE pipeline is:
+
+1. `build_ancestor_list()` -- enumerate each individual's ancestors;
+2. `compute_spillover_X()` -- build the kinship-weighted spillover matrix;
+3. `heritage_gs()` -- choose the penalties on a held-out tuning set
+   (or `heritage()` if they are known);
+4. `predict()` / `summary()` / `plot()` -- inspect and apply the fit.
+
+## Reference
+
+Diakite, A. O., Madore, A.-M., Greenwood, C. M. T., & Laprise, C. (2026).
+HERITAGE: Hierarchical effects regression with interactions for trait analysis
+in genetics. *Manuscript in preparation.*

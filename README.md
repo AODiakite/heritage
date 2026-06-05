@@ -1,5 +1,5 @@
-# heritage — Simulation Study: Scenario 1 (High Dimensionality)
-Abdoul Oudouss Diakite, Anne-Marie Madore, Catherine Laprise
+# heritage - Simulation Study: Scenario 1 (High Dimensionality)
+Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood, Catherine Laprise
 2026-03-27
 
 ## Overview
@@ -53,7 +53,7 @@ set.seed(2026)
 
 ------------------------------------------------------------------------
 
-## Step 1 — Simulate the pedigree
+## Step 1 - Simulate the pedigree
 
 Following the paper: 4-generation pedigree starting from 250 founders,
 litter size 2, random mate selection.
@@ -103,7 +103,7 @@ table(pedigree_df$gen)
 
 ------------------------------------------------------------------------
 
-## Step 2 — Simulate genotypes
+## Step 2 - Simulate genotypes
 
 Allele frequencies are drawn uniformly from $[0.01, 0.99]$ and genotypes
 are propagated according to Mendelian laws via
@@ -136,7 +136,7 @@ cat(sprintf("AF range        : [%.3f, %.3f]\n",
 
 ------------------------------------------------------------------------
 
-## Step 3 — Compute the kinship matrix
+## Step 3 - Compute the kinship matrix
 
 ``` r
 K <- as.matrix(kinship(
@@ -152,7 +152,7 @@ cat(sprintf("Kinship matrix : %d x %d\n", nrow(K), ncol(K)))
 
 ------------------------------------------------------------------------
 
-## Step 4 — Build the ancestor list
+## Step 4 - Build the ancestor list
 
 Using `build_ancestor_list()` from the `heritage` package, which
 recursively traverses the pedigree for each individual via
@@ -175,7 +175,7 @@ cat(sprintf("Non-founders            : %d\n", N - n_founders))
 
 ------------------------------------------------------------------------
 
-## Step 5 — Compute the spillover matrix $s_X$
+## Step 5 - Compute the spillover matrix $s_X$
 
 ``` r
 sX <- compute_spillover_X(X, K, ancestors)
@@ -188,7 +188,7 @@ cat(sprintf("Individuals with non-zero spillover: %.1f%%\n",
 
 ------------------------------------------------------------------------
 
-## Step 6 — Generate the outcome
+## Step 6 - Generate the outcome
 
 True coefficients are fixed across replications; only $\varepsilon$
 varies.
@@ -246,7 +246,7 @@ cat(sprintf("Oracle R2 (signal / variance) : %.3f\n",
 
 ------------------------------------------------------------------------
 
-## Step 7 — Split data by family
+## Step 7 - Split data by family
 
 Data are partitioned **by family** (60 % train / 20 % tune / 20 % test)
 to prevent data leakage, following the paper’s protocol.
@@ -314,7 +314,7 @@ y_test   <- y[idx_test]
 
 ------------------------------------------------------------------------
 
-## Step 8 — Fit HERITAGE with grid search
+## Step 8 - Fit HERITAGE with grid search
 
 ``` r
 gs <- heritage_gs(
@@ -356,22 +356,7 @@ print(gs)
 
 ------------------------------------------------------------------------
 
-## Step 9 — Diagnostics
-
-### Grid search heatmap
-
-``` r
-plot(gs, type = "heatmap")
-```
-
-<div id="fig-heatmap">
-
-![](README_files/figure-commonmark/fig-heatmap-1.png)
-
-Figure 1: Tuning MSE over the penalty grid. The red star marks the
-optimal pair.
-
-</div>
+## Step 9 - Diagnostics
 
 ### Regularisation paths
 
@@ -403,7 +388,7 @@ Figure 3: Active coefficient counts across all grid combinations.
 
 ------------------------------------------------------------------------
 
-## Step 10 — Performance metrics
+## Step 10 - Performance metrics
 
 ``` r
 best  <- gs$best_model
@@ -456,6 +441,6 @@ Figure 4: Observed vs predicted values on the test set.
 
 ## Reference
 
-Abdoul Oudouss Diakite, Anne-Marie Madore, Catherine Laprise (2026).
+Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood, Catherine Laprise (2026).
 HERITAGE: Hierarchical effects regression with interactions for trait
 analysis in genetics. *Manuscript in preparation.*

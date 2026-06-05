@@ -70,7 +70,7 @@
 #'   \code{\link{plot.heritage_gs}}
 #'
 #' @references
-#' Abdoul Oudouss Diakite, Anne-Marie Madore, Catherine Laprise (2026).
+#' Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood, Catherine Laprise (2026).
 #' HERITAGE: Hierarchical effects regression with interactions for trait
 #' analysis in genetics. Manuscript in preparation.
 #'
@@ -366,7 +366,7 @@ summary.heritage_gs <- function(object, ...) {
 #' @importFrom graphics par image contour points legend abline lines grid plot
 #'   plot.new text
 #' @importFrom grDevices colorRampPalette rgb
-#' @importFrom stats aggregate loess predict
+#' @importFrom stats loess predict
 #' @export
 plot.heritage_gs <- function(x,
                               type = c("heatmap", "paths", "convergence",
@@ -449,8 +449,10 @@ plot.heritage_gs <- function(x,
 
 #' @keywords internal
 .heritage_plot_paths <- function(x, valid_grid) {
-  bd <- stats::aggregate(n_active_beta ~ lambda_beta,
-                         data = valid_grid, FUN = mean)
+  # Slice the 2D grid at the selected penalty of the other dimension so the
+  # paths show integer active-coefficient counts for the actual fitted models,
+  # rather than averages across the whole grid.
+  bd <- valid_grid[valid_grid$lambda_delta == x$best_lambda_delta, ]
   bd <- bd[order(bd$lambda_beta, decreasing = TRUE), ]
   graphics::plot(log10(bd$lambda_beta), bd$n_active_beta,
                  type = "b", pch = 19L, col = "#2c7fb8",
@@ -464,8 +466,7 @@ plot.heritage_gs <- function(x,
                    legend = sprintf("Best: %.2e", x$best_lambda_beta),
                    lty = 2L, col = "red", cex = 0.8, bg = "white")
 
-  dd <- stats::aggregate(n_active_delta ~ lambda_delta,
-                         data = valid_grid, FUN = mean)
+  dd <- valid_grid[valid_grid$lambda_beta == x$best_lambda_beta, ]
   dd <- dd[order(dd$lambda_delta, decreasing = TRUE), ]
   graphics::plot(log10(dd$lambda_delta), dd$n_active_delta,
                  type = "b", pch = 19L, col = "#41ab5d",

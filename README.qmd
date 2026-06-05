@@ -3,6 +3,7 @@ title: "heritage — Simulation Study: Scenario 1 (High Dimensionality)"
 author:
   - name: Abdoul Oudouss Diakite
   - name: Anne-Marie Madore
+  - name: Celia M. T. Greenwood
   - name: Catherine Laprise
 date: today
 format:
@@ -299,15 +300,6 @@ print(gs)
 
 ## Step 9 — Diagnostics
 
-### Grid search heatmap
-
-```{r}
-#| label: fig-heatmap
-#| fig-cap: "Tuning MSE over the penalty grid. The red star marks the optimal pair."
-
-plot(gs, type = "heatmap")
-```
-
 ### Regularisation paths
 
 ```{r}
@@ -367,6 +359,6 @@ ggplot(data.frame(obs = y_test, pred = y_hat),
 
 ## Reference
 
-Abdoul Oudouss Diakite, Anne-Marie Madore, Catherine Laprise (2026).
+Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood, Catherine Laprise (2026).
 HERITAGE: Hierarchical effects regression with interactions for trait analysis
 in genetics. *Manuscript in preparation.*

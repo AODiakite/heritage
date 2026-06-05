@@ -41,7 +41,7 @@ the \strong{Hierarchical Alternating Minimization Algorithm (HAMA)}.
 
 \section{References}{
 
-Abdoul Oudouss Diakite, Anne-Marie Madore, Catherine Laprise (2026).
+Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood, Catherine Laprise (2026).
 HERITAGE: Hierarchical effects regression with interactions for trait
 analysis in genetics. Manuscript in preparation.
 }
@@ -60,6 +60,7 @@ Useful links:
 Authors:
 \itemize{
   \item Anne-Marie Madore
+  \item Celia M. T. Greenwood
   \item Catherine Laprise \email{claprise@uqac.ca}
 }
 

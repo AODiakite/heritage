@@ -8,6 +8,8 @@ Authors@R: c(
            email = "aodiakite@etu.uqac.ca"),
     person("Anne-Marie", "Madore",
            role = "aut"),
+    person("Celia M. T.", "Greenwood",
+           role = "aut"),
     person("Catherine", "Laprise",
            role = "aut",
            email = "claprise@uqac.ca")
@@ -37,5 +39,8 @@ Imports:
     utils
 Suggests:
     pROC,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
+VignetteBuilder: knitr

@@ -2,3 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# knitr / rmarkdown render artifacts
+/figure/
+*_cache/
+vignettes/*_files/
