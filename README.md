@@ -445,5 +445,4 @@ Figure 3: Observed vs predicted values on the test set.
 
 Abdoul Oudouss Diakite, Anne-Marie Madore, Celia M. T. Greenwood,
 Catherine Laprise (2026). HERITAGE: Hierarchical effects regression with
-interactions for trait analysis in genetics. *Manuscript in
-preparation.*
+interactions for trait analysis in genetics. *Submitted Manuscript.*
